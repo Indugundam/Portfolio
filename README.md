@@ -4,7 +4,7 @@
 Welcome to my portfolio website! This website showcases my projects, skills, achievements and experience in web development.
 
 ## 🌐 Live Demo  
-🔗 [Click here to visit the Portfolio](https://portfolio-indugundams-projects.vercel.app/)  
+🔗 [Click here to visit the Portfolio](https://myportfolio-indugundams-projects.vercel.app/)  
 
 ---
 
