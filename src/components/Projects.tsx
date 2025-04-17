@@ -23,9 +23,9 @@ const Projects = () => {
       title: "Lottery Hub",
       description: "A secure platform for managing lottery tickets and results. Implemented real-time updates, ticket verification, and a personalized user dashboard.",
       tags: ["React", "Tailwind CSS", "TypeScript", "Node.js"],
-      github: "https://github.com/Indugundam/ticket-treasure-hub",
+      github: "https://github.com/Indugundam/LotteryHub",
       demo: "https://ticket-treasure-hub.vercel.app/",
-      image: "/lovable-uploads/160d31a0-d201-4d04-97f7-252dd3b725e7.png"
+      image: "/lovable-uploads/2397f8ca-4049-4f2b-acfa-b034eb63ab52.png"
     },
     {
       title: "Food Finder",

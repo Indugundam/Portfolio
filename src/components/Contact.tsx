@@ -3,6 +3,16 @@ import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 import { Send, Github, Linkedin, AtSign, Smartphone, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Textarea } from "@/components/ui/textarea";
+
+// Form validation schema
+const contactSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters" })
+});
 
 const Contact = () => {
   const [ref, inView] = useInView({
@@ -17,77 +27,80 @@ const Contact = () => {
     email: "",
     message: ""
   });
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    email?: string;
+    message?: string;
+  }>({});
+  
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     if (inView) {
       setVisible(true);
     }
   }, [inView]);
-
-  useEffect(() => {
-    const initializeEmailJS = () => {
-      if (typeof window !== 'undefined' && window.emailjs) {
-        console.log("Contact: EmailJS already available, initializing");
-        window.emailjs.init("LDQdivLXpW4QOuPBp");
-      } else {
-        console.log("Contact: EmailJS not available yet");
-        setTimeout(initializeEmailJS, 1000);
-      }
-    };
-
-    initializeEmailJS();
-  }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when field is being edited
+    if (formErrors[name as keyof typeof formErrors]) {
+      setFormErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateForm = () => {
+    try {
+      contactSchema.parse(formData);
+      setFormErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: typeof formErrors = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as keyof typeof formErrors] = err.message;
+          }
+        });
+        setFormErrors(newErrors);
+      }
+      return false;
+    }
+  };
+  
+  // Direct email client method
+  const handleEmailRedirect = () => {
+    // Validate form first
+    if (!validateForm()) {
+      return;
+    }
+    
+    const subject = encodeURIComponent("Message from Portfolio Website");
+    const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`);
+    window.location.href = `mailto:indugundam2004@gmail.com?subject=${subject}&body=${body}`;
+    toast.success("Opening your email client...");
+    setFormData({ name: "", email: "", message: "" });
+  };
+  
+  // Handle form submission (now just shows a toast and calls the redirect)
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
     setFormStatus("sending");
     
-    try {
-      if (typeof window === 'undefined' || !window.emailjs) {
-        console.error("EmailJS library not loaded or not available");
-        throw new Error("EmailJS library not loaded or not available");
-      }
-      
-      console.log("Starting email send process");
-      
-      const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        message: formData.message,
-        to_email: "indugundam2004@gmail.com"
-      };
-      
-      console.log("Sending email with params:", templateParams);
-      
-      const result = await window.emailjs.send(
-        "service_portfolio",
-        "template_portfolio",
-        templateParams
-      );
-      
-      console.log("Email send complete. Result:", result);
-      
-      if (result && result.status === 200) {
-        setFormStatus("success");
-        setFormData({ name: "", email: "", message: "" });
-        toast.success("Message sent successfully! I'll get back to you soon.");
-      } else {
-        throw new Error(`Failed to send message: ${result?.text || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setFormStatus("error");
-      toast.error("Failed to send message. Please try again later or contact directly via email.");
-    } finally {
-      setTimeout(() => {
-        setFormStatus("idle");
-      }, 3000);
-    }
+    // Simulate sending
+    setTimeout(() => {
+      handleEmailRedirect();
+      setFormStatus("success");
+      toast.success("Message prepared in your email client!");
+    }, 500);
   };
   
   const contactInfo = [
@@ -113,7 +126,7 @@ const Contact = () => {
       icon: <Github className="w-5 h-5" />,
       label: "GitHub",
       value: "github.com/indugundam",
-      href: "https://github.com/indugundam"
+      href: "https://github.com/Indugundam/LotteryHub"
     },
     { 
       icon: <Linkedin className="w-5 h-5" />,
@@ -211,9 +224,17 @@ const Contact = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2 border border-primary/10 rounded-lg bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                      className={cn(
+                        "w-full px-4 py-2 border rounded-lg bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-1 transition-all",
+                        formErrors.name 
+                          ? "border-red-500 focus:ring-red-500" 
+                          : "border-primary/10 focus:ring-primary"
+                      )}
                       placeholder="Your name"
                     />
+                    {formErrors.name && (
+                      <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -227,52 +248,79 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2 border border-primary/10 rounded-lg bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                      className={cn(
+                        "w-full px-4 py-2 border rounded-lg bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-1 transition-all",
+                        formErrors.email 
+                          ? "border-red-500 focus:ring-red-500" 
+                          : "border-primary/10 focus:ring-primary"
+                      )}
                       placeholder="Your email"
                     />
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>
+                    )}
                   </div>
                   
                   <div>
                     <label htmlFor="message" className="block text-sm font-medium mb-1">
                       Message
                     </label>
-                    <textarea
+                    <Textarea
                       id="message"
                       name="message"
                       value={formData.message}
                       onChange={handleChange}
                       required
                       rows={4}
-                      className="w-full px-4 py-2 border border-primary/10 rounded-lg bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all resize-none"
+                      className={cn(
+                        "w-full px-4 py-2 border rounded-lg bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-1 transition-all resize-none",
+                        formErrors.message 
+                          ? "border-red-500 focus:ring-red-500" 
+                          : "border-primary/10 focus:ring-primary"
+                      )}
                       placeholder="Your message"
-                    ></textarea>
+                    />
+                    {formErrors.message && (
+                      <p className="mt-1 text-sm text-red-500">{formErrors.message}</p>
+                    )}
                   </div>
                   
-                  <button
-                    type="submit"
-                    disabled={formStatus === "sending"}
-                    className={cn(
-                      "w-full px-6 py-3 flex items-center justify-center space-x-2 rounded-lg font-medium transition-all",
-                      formStatus === "sending" ? "bg-gradient-blue/70 cursor-not-allowed" : "bg-gradient-blue hover:shadow-lg",
-                      "text-primary-foreground shadow-md"
-                    )}
-                  >
-                    {formStatus === "sending" ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Sending...</span>
-                      </>
-                    ) : formStatus === "success" ? (
-                      <span>Message Sent!</span>
-                    ) : formStatus === "error" ? (
-                      <span>Failed to send. Try again</span>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        <span>Send Message</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                    <button
+                      type="submit"
+                      disabled={formStatus === "sending"}
+                      className={cn(
+                        "w-full px-6 py-3 flex items-center justify-center space-x-2 rounded-lg font-medium transition-all",
+                        formStatus === "sending" ? "bg-gradient-blue/70 cursor-not-allowed" : "bg-gradient-blue hover:shadow-lg",
+                        "text-primary-foreground shadow-md"
+                      )}
+                    >
+                      {formStatus === "sending" ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Preparing...</span>
+                        </>
+                      ) : formStatus === "success" ? (
+                        <span>Message Ready!</span>
+                      ) : formStatus === "error" ? (
+                        <span>Try again</span>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Send Message</span>
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handleEmailRedirect}
+                      className="w-full px-6 py-3 flex items-center justify-center space-x-2 rounded-lg font-medium transition-all bg-white/10 hover:bg-white/20 text-foreground shadow-md"
+                    >
+                      <AtSign className="w-4 h-4" />
+                      <span>Open Mail App</span>
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
