@@ -10,11 +10,11 @@ Welcome to my portfolio website! This website showcases my projects, skills, and
 
 ## 📌 Features  
 
-- 🌟 **Responsive Design** – Works seamlessly on all devices.  
-- 💻 **Built with Modern Tech Stack** – Fast and optimized.  
-- 📂 **Projects Showcase** – Explore my work and contributions.  
-- 📝 **About Me Section** – Learn more about my background.  
-- 📩 **Contact Form** – Reach out to me easily.  
+- 🌟 **Responsive Design** – Works seamlessly on all devices  
+- 💻 **Built with Modern Tech Stack** – Fast and optimized  
+- 📂 **Projects Showcase** – Explore my work and contributions  
+- 📝 **About Me Section** – Learn more about my background  
+- 📩 **Contact Form** – Reach out to me easily  
 
 ---
 
@@ -25,7 +25,7 @@ This project is built using:
 - ⚡ **Vite** – Fast and modern frontend tooling  
 - 📝 **TypeScript** – Strongly typed JavaScript  
 - ⚛️ **React** – Component-based UI library  
-- 🎨 **shadcn-ui** – Beautiful and accessible UI components  
+- 🎨 **UI Components** – Beautiful and accessible UI components  
 - 💠 **Tailwind CSS** – Utility-first CSS framework  
 
 ---
